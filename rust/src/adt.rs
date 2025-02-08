@@ -77,6 +77,7 @@ impl<'a> ADT<'a> {
         0
     }
 
+    /// The ADT header is just a node at the base of the ADT
     fn check_header() -> i32 {
         // SAFETY: adt is always valid
         unsafe {
