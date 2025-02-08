@@ -148,9 +148,11 @@ impl <'a> ADT<'a> {
 
     pub fn value_at(offset: i32) -> Option<&'static [u8]> {
         let prop = ADT::property_at(offset);
-        match prop {
-            Ok(p) => Some(&p.value),
-            Err(_) => None
+        unsafe {
+            match prop {
+                Ok(p) => Some(core::slice::from_raw_parts(p.value.as_ptr(), p.size)),
+                Err(_) => None
+            }
         }
     }
 
