@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
-use core::mem::size_of;
 use core::ffi::*;
+use core::mem::size_of;
 
 use crate::c_size_t;
 
-const ADT_ERR_NOTFOUND: i32 =   1;
-const ADT_ERR_BADOFFSET: i32 =  4;
-const ADT_ERR_BADPATH: i32 =    5;
-const ADT_ERR_BADNCELLS: i32 =  14;
-const ADT_ERR_BADVALUE: i32 =   15;
-const ADT_ERR_BADLENGTH: i32 =  20;
+const ADT_ERR_NOTFOUND: i32 = 1;
+const ADT_ERR_BADOFFSET: i32 = 4;
+const ADT_ERR_BADPATH: i32 = 5;
+const ADT_ERR_BADNCELLS: i32 = 14;
+const ADT_ERR_BADVALUE: i32 = 15;
+const ADT_ERR_BADLENGTH: i32 = 20;
 
 const ADT_ALIGN: i32 = 4;
 
@@ -47,7 +47,7 @@ pub struct ADT<'a> {
     data: &'a [u8],
 }
 
-impl <'a> ADT<'a> {
+impl<'a> ADT<'a> {
     /// Not required... yet
     // pub fn from_raw(ptr: *const ADT) -> Self {
     //     // SAFETY: ptr comes from iBoot, we know it points to the ADT
@@ -67,11 +67,12 @@ impl <'a> ADT<'a> {
         // SAFETY: by the time we've called this, we already know we have
         // an aligned, valid node
         unsafe {
-            if (*node).property_count > 2048 ||
-                (*node).property_count == 0 ||
-                (*node).child_count > 2048 {
-                    return -ADT_ERR_BADOFFSET;
-                }
+            if (*node).property_count > 2048
+                || (*node).property_count == 0
+                || (*node).child_count > 2048
+            {
+                return -ADT_ERR_BADOFFSET;
+            }
         }
         0
     }
@@ -95,8 +96,9 @@ impl <'a> ADT<'a> {
 
         // SAFETY: We know the pointer is not null
         unsafe {
-            if prop as *const u8 as usize + 32 + 64 + (*prop).size > ADT_MAX_SIZE ||
-            ((*prop).size & 0x7ff00000) != 0 {
+            if prop as *const u8 as usize + 32 + 64 + (*prop).size > ADT_MAX_SIZE
+                || ((*prop).size & 0x7ff00000) != 0
+            {
                 return -ADT_ERR_BADOFFSET;
             } else {
                 0
@@ -148,10 +150,12 @@ impl <'a> ADT<'a> {
 
     pub fn value_at(offset: i32) -> Option<&'static [u8]> {
         let prop = ADT::property_at(offset);
+        // SAFETY: If we get a property, then the property is safe. We know the
+        // size of p.value in bytes.
         unsafe {
             match prop {
                 Ok(p) => Some(core::slice::from_raw_parts(p.value.as_ptr(), p.size)),
-                Err(_) => None
+                Err(_) => None,
             }
         }
     }
@@ -180,17 +184,65 @@ unsafe extern "C" {
     unsafe fn adt_get_child_count(adt: *const ADT, offset: c_int) -> c_int;
     unsafe fn adt_first_child_offset(adt: *const ADT, offset: c_int) -> c_int;
     unsafe fn adt_next_sibling_offset(adt: *const ADT, offset: c_int) -> c_int;
-    unsafe fn adt_subnode_offset_namelen(adt: *const ADT, parentoffset: c_int, name: *const c_char, namelen: c_size_t) -> c_int;
+    unsafe fn adt_subnode_offset_namelen(
+        adt: *const ADT,
+        parentoffset: c_int,
+        name: *const c_char,
+        namelen: c_size_t,
+    ) -> c_int;
     unsafe fn adt_path_offset(adt: *const ADT, path: *const c_char) -> c_int;
     unsafe fn adt_path_offset_trace(adt: *const ADT, path: *const c_char, offsets: c_int) -> c_int;
     unsafe fn adt_get_name(adt: *const ADT, nodeoffset: c_int) -> *const c_char;
-    unsafe fn adt_get_property_namelen(adt: *const ADT, nodeoffset: c_int, name: *const c_char, namelen: c_size_t) -> *const ADTProperty;
-    unsafe fn adt_get_property(adt: *const ADT, nodeoffet: c_int, name: *const c_char) -> *const ADTProperty;
-    unsafe fn adt_getprop_by_offset(adt: *const ADT, offset: c_int, namep: *const *const c_char, lenp: *mut c_uint) -> *const ADTProperty;
-    unsafe fn adt_getprop_namelen(adt: *const ADT, nodeoffset: c_int, name: *const c_char, namelen: c_size_t) -> *const c_void;
-    unsafe fn adt_getprop(adt: *const ADT, nodeoffset: c_int, name: *const c_char, lenp: *mut c_uint) -> *const ADTProperty;
-    unsafe fn adt_setprop(adt: *mut ADT, nodeoffset: c_int, name: *const c_char, value: *mut c_void, len: c_size_t) -> c_int;
-    unsafe fn adt_getprop_copy(adt: *const ADT, nodeoffset: c_int, name: *const c_char, out: *mut c_void, len: c_size_t) -> c_int;
-    unsafe fn adt_get_reg(adt: *const ADT, path: *mut c_int, prop: *const c_char, idx: c_int, addr: u64, size: *mut u64) -> c_int;
+    unsafe fn adt_get_property_namelen(
+        adt: *const ADT,
+        nodeoffset: c_int,
+        name: *const c_char,
+        namelen: c_size_t,
+    ) -> *const ADTProperty;
+    unsafe fn adt_get_property(
+        adt: *const ADT,
+        nodeoffet: c_int,
+        name: *const c_char,
+    ) -> *const ADTProperty;
+    unsafe fn adt_getprop_by_offset(
+        adt: *const ADT,
+        offset: c_int,
+        namep: *const *const c_char,
+        lenp: *mut c_uint,
+    ) -> *const ADTProperty;
+    unsafe fn adt_getprop_namelen(
+        adt: *const ADT,
+        nodeoffset: c_int,
+        name: *const c_char,
+        namelen: c_size_t,
+    ) -> *const c_void;
+    unsafe fn adt_getprop(
+        adt: *const ADT,
+        nodeoffset: c_int,
+        name: *const c_char,
+        lenp: *mut c_uint,
+    ) -> *const ADTProperty;
+    unsafe fn adt_setprop(
+        adt: *mut ADT,
+        nodeoffset: c_int,
+        name: *const c_char,
+        value: *mut c_void,
+        len: c_size_t,
+    ) -> c_int;
+    unsafe fn adt_getprop_copy(
+        adt: *const ADT,
+        nodeoffset: c_int,
+        name: *const c_char,
+        out: *mut c_void,
+        len: c_size_t,
+    ) -> c_int;
+    unsafe fn adt_get_reg(
+        adt: *const ADT,
+        path: *mut c_int,
+        prop: *const c_char,
+        idx: c_int,
+        addr: u64,
+        size: *mut u64,
+    ) -> c_int;
     unsafe fn adt_is_compatible(adt: *const ADT, nodeoffset: c_int, compat: *const c_char) -> bool;
 }
