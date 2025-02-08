@@ -101,16 +101,15 @@ impl<'a> ADT<'a> {
 
     /// Do some cursed shit to get a fat pointer to ADTProperty
     fn adt_prop_ptr(ptr: *const u8) -> *const ADTProperty {
-    // SAFETY: If we're calling this, we know we have a property
-    // at the address
-    unsafe {
-        let val_size: usize = *(ptr.add(32)) as usize;
-        // sizeof name + sizeof size + sizeof value
-        let sp: *const [u8] = core::slice::from_raw_parts(ptr,
-                                           32 + 1 + val_size);
-        sp as *const ADTProperty
+        // SAFETY: If we're calling this, we know we have a property
+        // at the address
+        unsafe {
+            let val_size: usize = *(ptr.add(32)) as usize;
+            // sizeof name + sizeof size + sizeof value
+            let sp: *const [u8] = core::slice::from_raw_parts(ptr, 32 + 1 + val_size);
+            sp as *const ADTProperty
+        }
     }
-}
 
     /// Check a given offset for an ADT node. Returns a static reference
     /// to ADTNodeHeader if successful, or a known ADT error code if
@@ -160,7 +159,7 @@ impl<'a> ADT<'a> {
         unsafe {
             match prop {
                 Ok(p) => Some(core::slice::from_raw_parts(p.value.as_ptr(), p.size)),
-                Err(_) => None
+                Err(_) => None,
             }
         }
     }
@@ -174,12 +173,14 @@ unsafe extern "C" {
     unsafe fn adt_get_size() -> c_int;
 }
 
-
 #[no_mangle]
-pub unsafe extern "C" fn adt_get_property_by_offset(_dt: *const c_void, offset: c_int) -> *const c_void {
+pub unsafe extern "C" fn adt_get_property_by_offset(
+    _dt: *const c_void,
+    offset: c_int,
+) -> *const c_void {
     let prop = ADT::property_at(offset);
     match prop {
         Ok(p) => p as *const ADTProperty as *const c_void,
-        Err(_) => core::ptr::null()
+        Err(_) => core::ptr::null(),
     }
 }
