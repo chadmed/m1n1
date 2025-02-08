@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 #include "types.h"
+#include "xnuboot.h"
 
 #define ADT_ERR_NOTFOUND  1
 #define ADT_ERR_BADOFFSET 4
@@ -35,6 +36,10 @@ struct adt_node_hdr {
 #define ADT_SIZE(node)        ((node)->size & 0x7fffffff)
 
 /* This API is designed to match libfdt's read-only API */
+
+static inline u32 adt_get_size(void) {
+    return cur_boot_args.devtree_size;
+}
 
 /* Basic sanity check */
 int adt_check_header(const void *adt);

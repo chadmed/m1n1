@@ -44,6 +44,7 @@ pub struct ADTSegmentRanges {
 
 #[repr(C)]
 pub struct ADT<'a> {
+    size: usize,
     data: &'a [u8],
 }
 
@@ -52,15 +53,17 @@ impl<'a> ADT<'a> {
     pub fn from_raw(ptr: *const ADT) -> Self {
         // SAFETY: ptr comes from iBoot, we know it points to the ADT
         unsafe {
+            let sz: usize = adt_get_size() as usize;
             Self {
-                data: core::slice::from_raw_parts(ptr as *const u8, ADT_MAX_SIZE),
+                size: sz,
+                data: core::slice::from_raw_parts(ptr as *const u8, sz),
             }
         }
     }
 
     /// Reimplementations of private functions
-    fn check_node(node: *const ADTNodeHeader) -> i32 {
-        if node as usize + size_of::<ADTNodeHeader>() > ADT_MAX_SIZE {
+    fn check_node(self, node: *const ADTNodeHeader) -> i32 {
+        if node as usize + size_of::<ADTNodeHeader>() > self.size {
             return -ADT_ERR_BADOFFSET;
         }
 
@@ -78,10 +81,10 @@ impl<'a> ADT<'a> {
     }
 
     /// The ADT header is just a node at the base of the ADT
-    fn check_header() -> i32 {
+    fn check_header(self) -> i32 {
         // SAFETY: adt is always valid
         unsafe {
-            ADT::check_node(adt as *const ADTNodeHeader)
+            ADT::check_node(self, adt as *const ADTNodeHeader)
         }
     }
 
@@ -181,6 +184,7 @@ extern "C" {
 }
 
 unsafe extern "C" {
+    unsafe fn adt_get_size() -> c_int;
     unsafe fn adt_get_property_count(adt: *const ADT, offset: c_int) -> c_int;
     unsafe fn adt_first_property_offset(adt: *const ADT, offset: c_int) -> c_int;
     unsafe fn adt_next_property_offset(adt: *const ADT, offset: c_int) -> c_int;
