@@ -49,14 +49,14 @@ pub struct ADT<'a> {
 
 impl<'a> ADT<'a> {
     /// Not required... yet
-    // pub fn from_raw(ptr: *const ADT) -> Self {
-    //     // SAFETY: ptr comes from iBoot, we know it points to the ADT
-    //     unsafe {
-    //         Self {
-    //             data: core::slice::from_raw_parts(ptr as *const u8, ADT_MAX_SIZE),
-    //         }
-    //     }
-    // }
+    pub fn from_raw(ptr: *const ADT) -> Self {
+        // SAFETY: ptr comes from iBoot, we know it points to the ADT
+        unsafe {
+            Self {
+                data: core::slice::from_raw_parts(ptr as *const u8, ADT_MAX_SIZE),
+            }
+        }
+    }
 
     /// Reimplementations of private functions
     fn check_node(node: *const ADTNodeHeader) -> i32 {
@@ -78,7 +78,10 @@ impl<'a> ADT<'a> {
     }
 
     fn check_header() -> i32 {
-        ADT::check_node(0 as *const ADTNodeHeader)
+        // SAFETY: adt is always valid
+        unsafe {
+            ADT::check_node(adt as *const ADTNodeHeader)
+        }
     }
 
     fn check_offset(offset: i32) -> i32 {
