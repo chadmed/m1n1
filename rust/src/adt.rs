@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 use core::ffi::*;
+use core::mem::size_of;
 
 use crate::c_size_t;
 
