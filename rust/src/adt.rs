@@ -3,6 +3,7 @@ use core::ffi::*;
 use core::mem::size_of;
 
 use crate::c_size_t;
+use crate::println;
 
 // const ADT_ERR_NOTFOUND: i32 = 1;
 const ADT_ERR_BADOFFSET: i32 = 4;
@@ -152,6 +153,13 @@ impl<'a> ADT<'a> {
         offset + size_of::<ADTNodeHeader>() as i32
     }
 
+    /// We can't do a size_of here, as we don't know the size of prop.value
+    /// at compile time. We know the metadata portion of ADTProperty is 36 bytes
+    /// though.
+    pub fn next_property_offset(prop: &ADTProperty, offset: i32) -> i32 {
+        offset + 36 + (((*prop).size as i32 + ADT_ALIGN - 1) & !(ADT_ALIGN - 1))
+    }
+
     /// Return the value of the property at the given offset. Returns a None
     /// if the offset does not point to a valid property.
     ///
@@ -182,6 +190,21 @@ unsafe extern "C" {
 #[no_mangle]
 pub unsafe extern "C" fn adt_first_property_offset(_dt: *const c_void, offset: c_int) -> c_int {
     ADT::first_property_offset(offset) as c_int
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn adt_next_property_offset(_dt: *const c_void, offset: c_int) -> c_int {
+    let prop = ADT::property_at(offset);
+    match prop {
+        Ok(p) => {
+            println!("Prop: {:p}, Size: {}", p, p.size);
+            ADT::next_property_offset(p, offset) as c_int
+        },
+        Err(e) => {
+            println!("Failed to get property at {} with error {}", offset, e);
+            e as c_int
+        }
+    }
 }
 
 #[no_mangle]
