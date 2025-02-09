@@ -90,7 +90,8 @@ impl<'a> ADT<'a> {
 
         // SAFETY: We know the pointer is not null
         unsafe {
-            if prop as *const u8 as usize + 32 + 64 + (*prop).size > adt_get_size() as usize
+            // 36 bytes of metadata
+            if prop as *const u8 as usize + 36 + (*prop).size > adt_get_size() as usize
                 || ((*prop).size & 0x7ff00000) != 0
             {
                 return Err(-ADT_ERR_BADOFFSET);
