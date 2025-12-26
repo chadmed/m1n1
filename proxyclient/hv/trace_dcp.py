@@ -13,6 +13,7 @@ from m1n1.trace.dart import DARTTracer
 from m1n1.trace.asc import ASCTracer, EP, EPState, msg, msg_log, DIR
 from m1n1.fw.afk.rbep import *
 from m1n1.fw.afk.epic import *
+from m1n1.fw.dcp.ipc import IOMFBSwapRec, IOSurface
 
 Ver.set_version(hv.u)
 
@@ -810,17 +811,28 @@ class DCPCallChannel(Reloadable):
         state.out_addr = self.buf + msg.OFF + 12 + in_len
         state.out_len = out_len
 
-        verb = self.dcpep.get_verbosity(tag)
-        if verb >= 1:
-            self.log(f"{dir}{self.name}.{msg.OFF:x} {tag}:{KNOWN_MSGS.get(tag, 'unk')} ({msg})")
-        if verb >= 2:
-            print(f"Message: {tag} ({KNOWN_MSGS.get(tag, 'unk')}): (in {in_len:#x}, out {out_len:#x})")
-            if data_in:
-                print(f"{dir} Input ({len(data_in):#x} bytes):")
-                chexdump(data_in[:self.state.max_len])
+        self.log(f"{dir}{self.name}.{msg.OFF:x} {tag}:{KNOWN_MSGS.get(tag, 'unk')} ({msg})")
 
-        #if tag not in KNOWN_MSGS:
-            #hv.run_shell()
+        if tag == "A408":
+            swapreq = IOMFBSwapRec.parse(data_in[:IOMFBSwapRec.sizeof()])
+            self.log(swapreq)
+
+            poss_surfs = data_in[IOMFBSwapRec.sizeof():IOMFBSwapRec.sizeof() + IOSurface.sizeof() * 4]
+            sidx = 0
+            for surf in swapreq.surf_flags:
+                if surf == 1:
+                    iosurf = IOSurface.parse(poss_surfs[IOSurface.sizeof() * sidx:IOSurface.sizeof() * (sidx + 1)])
+                    self.log(f"Surface {sidx}: {iosurf}")
+                sidx += 1
+
+        # verb = self.dcpep.get_verbosity(tag)
+        # if verb >= 1:
+        #     self.log(f"{dir}{self.name}.{msg.OFF:x} {tag}:{KNOWN_MSGS.get(tag, 'unk')} ({msg})")
+        # if verb >= 2:
+        #     print(f"Message: {tag} ({KNOWN_MSGS.get(tag, 'unk')}): (in {in_len:#x}, out {out_len:#x})")
+        #     if data_in:
+        #         print(f"{dir} Input ({len(data_in):#x} bytes):")
+        #         chexdump(data_in[:self.state.max_len])
 
         if self.state.dumpfile:
             dump = f"CALL {dir} {msg.value:#018x} {self.name} {state.off:#x} {state.tag} {in_len:#x} {out_len:#x} {data_in.hex()}\n"
