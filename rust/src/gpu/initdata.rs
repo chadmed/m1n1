@@ -759,6 +759,11 @@ pub unsafe extern "C" fn rust_gpu_initdata_size(
                 *data_b = mem::size_of::<raw::HwDataBG13V13_5>();
                 *globals = mem::size_of::<raw::GlobalsG13V13_5>();
             }
+            (hw::GpuGen::G13, _, 14, 7) => {
+                *data_a = mem::size_of::<raw::HwDataAG13V13_5>();
+                *data_b = mem::size_of::<raw::HwDataBG13V13_5>();
+                *globals = mem::size_of::<raw::GlobalsG13V13_5>();
+            }
             (hw::GpuGen::G14, hw::GpuVariant::G, 13, 5) => {
                 *data_a = mem::size_of::<raw::HwDataAG14V13_5>();
                 *data_b = mem::size_of::<raw::HwDataBG14V13_5>();
@@ -1001,6 +1006,14 @@ pub unsafe extern "C" fn rust_fill_gpu_initdata(
                 InitDataBuilderG14V12_4::globals(hwcfg, &dyncfg.pwr, globals);
             }
             (hw::GpuGen::G13, _, 13, 5) => {
+                let data_a = &mut *(data_a as *mut raw::HwDataAG13V13_5);
+                InitDataBuilderG13V13_5::hwdata_a(hwcfg, &dyncfg.pwr, data_a);
+                let data_b = &mut *(data_b as *mut raw::HwDataBG13V13_5);
+                InitDataBuilderG13V13_5::hwdata_b(hwcfg, &dyncfg, data_b);
+                let globals = &mut *(globals as *mut raw::GlobalsG13V13_5);
+                InitDataBuilderG13V13_5::globals(hwcfg, &dyncfg.pwr, globals);
+            }
+            (hw::GpuGen::G13, _, 14, 7) => {
                 let data_a = &mut *(data_a as *mut raw::HwDataAG13V13_5);
                 InitDataBuilderG13V13_5::hwdata_a(hwcfg, &dyncfg.pwr, data_a);
                 let data_b = &mut *(data_b as *mut raw::HwDataBG13V13_5);
